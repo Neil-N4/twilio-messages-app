@@ -1,300 +1,214 @@
-import React from "react";
-import { View, Text } from "react-native";
-import GoogleIcon from "../assets/svg/googleicon.svg";
-// Dummy style hook and function for demonstration (replace with your actual implementation)
-const useStyles = (stylesheet: any) => ({ styles: stylesheet });
-const createStyleSheet = (fn: any) => fn({});
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { useNavigation } from '@react-navigation/native';
 
-export interface ALogInPageForAMobileAppProps {
-  /** Used to locate this view in end-to-end tests. */
-  testID?: string;
-}
+export default function LoginScreen() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
-export function ALogInPageForAMobileApp(props: ALogInPageForAMobileAppProps) {
-  const { styles } = useStyles(stylesheet);
+  const handleSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    console.log('Sending sign in request:', { username, password });
+    try {
+      const response = await fetch("http://69.58.113.122:15678/webhook/68b9c07a-73fd-4561-8eb5-c5f7e89c71da", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const result = await response.json();
+      console.log('Webhook response:', result);
+      if (response.status === 200 && result.success) {
+        navigation.navigate('Chats');
+      } else {
+        Alert.alert("Sign In Failed", result.error || "Invalid username or password.");
+      }
+    } catch (e) {
+      console.log('Network error:', e);
+      Alert.alert("Network Error", "Could not connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.root} testID={props.testID ?? "1:6976"}>
-      <View style={styles.mainContent} testID="1:4502">
-        <View style={styles.signInForm} testID="1:4788">
-          <View style={styles.frame} testID="1:4789">
-            <View style={styles.tableHeaderHugeTitle} testID="1:4809">
-              <View style={styles.tableHeader} testID="1:4810">
-                <Text style={styles.welcomeBack} testID="1:4811">
-                  {`Welcome Back!`}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.textField} testID="1:4802">
-              <View style={styles.textFieldAtom} testID="1:4805">
-                <Text style={styles.username} testID="1:4806">
-                  {`Username`}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.textField2} testID="1:4795">
-              <View style={styles.textFieldAtom2} testID="1:4798">
-                <Text style={styles.password} testID="1:4799">
-                  {`Password`}
-                </Text>
-              </View>
-            </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: '#f8f9fa' }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      {/* Top right Next button */}
+      <TouchableOpacity
+        style={styles.nextBtn}
+        onPress={() => navigation.navigate('Chats')}
+      >
+        <Text style={styles.nextBtnText}>Next</Text>
+      </TouchableOpacity>
+      <View style={styles.container}>
+        <Image
+          source={{ uri: "https://applicationbank.com/timeboss/assets/img/logos/logoo.png" }}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>Sign In to Messaging</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Username</Text>
+          <TextInput
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Enter your username"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+          />
+        </View>
+        <View style={[styles.inputGroup, { marginBottom: 24 }]}> 
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={styles.label}>Password</Text>
+          </View>
+          <View style={{ position: 'relative' }}>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Pressable
+              style={styles.passwordToggle}
+              onPress={() => setShowPassword(v => !v)}
+              accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+            >
+              <Text style={{ fontSize: 20, color: '#888' }}>{showPassword ? '👁️' : '🙈'}</Text>
+            </Pressable>
           </View>
         </View>
-        <View style={styles.signInButtons} testID="1:4767">
-          <View style={styles.tripleButtonsVerticalLarge} testID="1:4775">
-            <View style={styles.buttonLargePrimary} testID="1:4786">
-              <Text style={styles.signIn} testID="1:4787">
-                {`Sign In`}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.signUpButtons} testID="1:4734">
-          <View style={styles.buttonSignUpWithGoogle} testID="1:4749">
-            <Text style={styles.signUpWithGoogle} testID="1:4750">
-              {`Sign up with Google`}
-            </Text>
-            <GoogleIcon />
-          </View>
+        <TouchableOpacity
+          style={styles.signInBtn}
+          onPress={handleSignIn}
+          disabled={loading}
+        >
+          <Text style={styles.signInBtnText}>{loading ? "Signing In..." : "Sign In"}</Text>
+        </TouchableOpacity>
+        <View style={styles.signupBox}>
+          <Text style={styles.signupText}>
+            Don't have an account?{' '}
+            <Text style={styles.signupLink} onPress={() => navigation.navigate('Signup')}>Sign Up</Text>
+          </Text>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
-const stylesheet = createStyleSheet((theme: any) => ({
-  root: {
-    width: 393,
-    minHeight: 852,
-    flexDirection: "column",
-    alignItems: "flex-start",
-    backgroundColor: "rgba(245, 245, 245, 1)",
+const styles = StyleSheet.create({
+  nextBtn: {
+    position: 'absolute',
+    top: 48,
+    right: 24,
+    zIndex: 10,
+    backgroundColor: 'transparent',
+    padding: 8,
   },
-  welcomeBack: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 0,
-    color: "rgba(0, 0, 139, 1)",
-    textAlign: "center",
-    fontFamily: "Public Sans",
-    fontSize: 28,
-    fontStyle: "normal",
-    fontWeight: "700",
-    letterSpacing: -0.56,
+  nextBtnText: {
+    color: '#219aff',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
-  mainContent: {
-    minHeight: 759,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
+  container: {
+    maxWidth: 400,
+    width: '100%',
+    alignSelf: 'center',
+    marginTop: '10%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 28,
+    shadowColor: '#000',
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  signInForm: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
+  logo: {
+    width: 180,
+    height: 60,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
-  frame: {
-    paddingTop: 50,
-    paddingLeft: 0,
-    paddingBottom: 50,
-    paddingRight: 0,
-    flexDirection: "column",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 24,
+    color: '#222',
   },
-  tableHeaderHugeTitle: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
+  inputGroup: {
+    marginBottom: 18,
   },
-  tableHeader: {
-    flexDirection: "row",
-    paddingTop: 28,
-    paddingLeft: 18,
-    paddingBottom: 18,
-    paddingRight: 18,
-    justifyContent: "center",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
+  label: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 6,
+    color: '#222',
   },
-  username: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 0,
-    overflow: "hidden",
-    color: "rgba(0, 0, 139, 0.6196078658103943)",
-    fontFamily: "Public Sans",
-    fontSize: 17,
-    fontStyle: "normal",
-    fontWeight: "400",
-    letterSpacing: -0.085,
+  input: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    paddingHorizontal: 14,
+    height: 44,
+    color: '#333',
+    fontSize: 16,
   },
-  textField: {
-    paddingTop: 8,
-    paddingLeft: 18,
-    paddingBottom: 8,
-    paddingRight: 18,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
+  passwordToggle: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    height: 24,
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  textFieldAtom: {
-    flexDirection: "row",
-    paddingTop: 13.5,
-    paddingLeft: 13,
-    paddingBottom: 13.5,
-    paddingRight: 13,
-    alignItems: "center",
-    rowGap: 8,
-    columnGap: 8,
-    alignSelf: "stretch",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: "rgba(0, 0, 139, 0.09019608050584793)",
+  signInBtn: {
+    backgroundColor: '#219aff',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+    opacity: 0.7,
   },
-  password: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 0,
-    overflow: "hidden",
-    color: "rgba(0, 0, 139, 0.6196078658103943)",
-    fontFamily: "Public Sans",
-    fontSize: 17,
-    fontStyle: "normal",
-    fontWeight: "400",
-    letterSpacing: -0.085,
+  signInBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  textField2: {
-    paddingTop: 8,
-    paddingLeft: 18,
-    paddingBottom: 8,
-    paddingRight: 18,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
+  signupBox: {
+    marginTop: 18,
+    alignItems: 'center',
   },
-  textFieldAtom2: {
-    flexDirection: "row",
-    paddingTop: 13.5,
-    paddingLeft: 13,
-    paddingBottom: 13.5,
-    paddingRight: 13,
-    alignItems: "center",
-    rowGap: 8,
-    columnGap: 8,
-    alignSelf: "stretch",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: "rgba(0, 0, 139, 0.09019608050584793)",
+  signupText: {
+    color: '#888',
+    fontSize: 14,
   },
-  signIn: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 0,
-    overflow: "hidden",
-    color: "rgba(255, 255, 255, 1)",
-    textAlign: "center",
-    fontFamily: "Public Sans",
-    fontSize: 17,
-    fontStyle: "normal",
-    fontWeight: "500",
+  signupLink: {
+    color: '#219aff',
+    fontWeight: 'bold',
   },
-  signInButtons: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    rowGap: 8,
-    columnGap: 8,
-    alignSelf: "stretch",
-  },
-  tripleButtonsVerticalLarge: {
-    paddingTop: 18,
-    paddingLeft: 18,
-    paddingBottom: 18,
-    paddingRight: 18,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    rowGap: 18,
-    columnGap: 18,
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
-  },
-  buttonLargePrimary: {
-    flexDirection: "row",
-    height: 50,
-    paddingTop: 14.5,
-    paddingLeft: 16,
-    paddingBottom: 14.5,
-    paddingRight: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    rowGap: 8,
-    columnGap: 8,
-    alignSelf: "stretch",
-    borderBottomLeftRadius: 48,
-    borderBottomRightRadius: 48,
-    borderTopLeftRadius: 48,
-    borderTopRightRadius: 48,
-    backgroundColor: "rgba(0, 0, 139, 1)",
-  },
-  signUpWithGoogle: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 0,
-    overflow: "hidden",
-    color: "rgba(0, 0, 139, 1)",
-    textAlign: "center",
-    fontFamily: "Public Sans",
-    fontSize: 17,
-    fontStyle: "normal",
-    fontWeight: "500",
-  },
-  signUpButtons: {
-    paddingTop: 18,
-    paddingLeft: 18,
-    paddingBottom: 18,
-    paddingRight: 18,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    rowGap: 18,
-    columnGap: 18,
-    alignSelf: "stretch",
-    backgroundColor: "rgba(245, 245, 245, 1)",
-  },
-  buttonSignUpWithGoogle: {
-    flexDirection: "row",
-    height: 50,
-    paddingTop: 14,
-    paddingLeft: 16,
-    paddingBottom: 14,
-    paddingRight: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    rowGap: 8,
-    columnGap: 8,
-    alignSelf: "stretch",
-    borderBottomLeftRadius: 48,
-    borderBottomRightRadius: 48,
-    borderTopLeftRadius: 48,
-    borderTopRightRadius: 48,
-    borderWidth: 0.5,
-    borderStyle: "solid",
-    borderColor: "rgba(0, 0, 139, 0.20000000298023224)",
-  },
-}));
+});
